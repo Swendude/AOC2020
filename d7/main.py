@@ -1,59 +1,29 @@
 import pprint
+from collections import defaultdict
+import re
+bags_can_contain = defaultdict(list)
+bag_can_be_contained_by = defaultdict(list)
 
 with open('input.txt') as f:
-    inputs = [line for line in f]
+    for line in f:
+        container, contents = line.split('contain')
+        contents = re.findall(r'(\d+) ([a-z ]+) [bag|bags,. ]+', contents)
+        container = re.match(r'([a-z ]+) bags', container).groups()[0]
+        for content in contents:
+            bags_can_contain[container].append(content)
+            bag_can_be_contained_by[content[1]].append(container)
 
-bags_can_contain = {}
+rows = [['shiny gold']]
+parents_checked = set()
+new_parents = True
+while new_parents:
+    new_row = []
+    new_parents = False
+    for bag in rows[-1]:
+        if bag in bag_can_be_contained_by:
+            new_row = new_row + list(bag_can_be_contained_by[bag])
+            new_parents = True
+    if new_row: rows.append(new_row)
 
-def contents_lists(text):
-    result = []
-    parts = text.split(',')
-    for part in parts:
-        cleaned = part.strip().replace('.', '')
-        amount, _type = cleaned.split(" ")[0], ' '.join(cleaned.split(" ")[1:])
-        result.append((amount, _type))
-    return result
-
-for inp in inputs:
-    container, contents = inp.split('contain')
-    bags_can_contain[container.strip()] = contents_lists(contents)
-
-bag_can_be_contained_by = {}
-for bag, containables in bags_can_contain.items():
-    for amount, containable in containables:
-        if containable in bag_can_be_contained_by:
-            bag_can_be_contained_by[containable].add(bag)
-        else:
-            bag_can_be_contained_by[containable] = set([bag])
-
-# targets = ['shiny gold bags']
-# can_hold_me = set()
-# ended = False
-# i = 0
-# while not ended:
-#     if targets == []:
-#         ended = True
-#     new_targets = []
-#     for target in targets:
-#         if target in bag_can_be_contained_by:
-#             parents = set(bag_can_be_contained_by[target])
-#             can_hold_me = can_hold_me.union(set(zip([i * len(parents)], parents)))
-#             new_targets = new_targets + list(parents)
-#     targets = list(set(new_targets))
-#     i += 1
-
-# pprint.pprint(sorted(can_hold_me))
-# print(len(can_hold_me))
-# ended = False
-
-#     if targets == []:
-#         ended = True
-#     for target in targets:
-#             can_hold_me = can_hold_me.union(set(bag_can_be_contained_by[target]))
-#     targets = list(set(new_targets))
-
-# print(len(set(ends)))
-
-
-# pprint.pprint(bags_can_contain['clear gray bags'])
-pprint.pprint(bag_can_be_contained_by['shiny gold bags'])
+flat = [b for r in rows[1:] for b in r]
+print(len(set(flat)))
